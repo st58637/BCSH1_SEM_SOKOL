@@ -27,17 +27,31 @@ namespace BCSH1_SEM_SOKOL
             DataContext = viewModel;
         }
 
-        private void NumberValidationTextBox(object sender, TextCompositionEventArgs e)
+        private void XY_LostFocus(object sender, RoutedEventArgs e)
         {
-            Regex regex = new Regex("[^0-9]+");
-            e.Handled = regex.IsMatch(e.Text);
+            TextBox textBox = sender as TextBox;
+            if (textBox != null)
+            {
+                int number;
+                if (!int.TryParse(textBox.Text, out number) || number < -200 || number > 200)
+                {
+                    MessageBox.Show("Zadávejte čísla v rozsahu od -200 do 200.");
+                    textBox.Text = "0";
+                }
+            }
         }
 
-        private void TextBox_PreviewKeyDown(object sender, KeyEventArgs e)
+        private void Population_LostFocus(object sender, RoutedEventArgs e)
         {
-            if (e.Key == Key.Space || e.Key == Key.Delete || e.Key == Key.Back)
+            TextBox textBox = sender as TextBox;
+            if (textBox != null)
             {
-                e.Handled = true;
+                int number;
+                if (!int.TryParse(textBox.Text, out number) || number < 0)
+                {
+                    MessageBox.Show("Populace musí být větší nebo rovna 0.");
+                    textBox.Text = "0";
+                }
             }
         }
     }

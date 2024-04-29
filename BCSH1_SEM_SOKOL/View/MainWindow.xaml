@@ -26,6 +26,7 @@
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
                             </Grid.RowDefinitions>
 
                             <StackPanel Grid.Column="0" Grid.Row="0" Orientation="Vertical" Margin="10,0">
@@ -42,10 +43,10 @@
 
                             <StackPanel Grid.Column="1" Grid.Row="0" Orientation="Vertical">
                                 <TextBox Width="150" Height="25" Text="{Binding JmenoVesnice}" MaxLength="50" Margin="0,5"/>
-                                <TextBox Width="150" Height="25" Text="{Binding X}" MaxLength="5" Margin="0,5"/>
-                                <TextBox Width="150" Height="25" Text="{Binding Y}" MaxLength="5" Margin="0,5"/>
-                                <ComboBox Width="150" Height="25" Margin="0,5" ItemsSource="{Binding _hraci}" DisplayMemberPath="Jmeno" SelectedValuePath="ID" SelectedValue="{Binding VybranyHracID}"/>
-                                <TextBox Width="150" Height="25" Text="{Binding Populace}" MaxLength="10" Margin="0,5"/>
+                                <TextBox Width="150" Height="25" Text="{Binding X}" MaxLength="4" Margin="0,5" LostFocus="XY_LostFocus"/>
+                                <TextBox Width="150" Height="25" Text="{Binding Y}" MaxLength="4" Margin="0,5" LostFocus="XY_LostFocus"/>
+                                <ComboBox Width="150" Height="25" Margin="0,5" ItemsSource="{Binding _hraciDataGrid}" DisplayMemberPath="Jmeno" SelectedValuePath="ID" SelectedValue="{Binding VybranyHracID}"/>
+                                <TextBox Width="150" Height="25" Text="{Binding Populace}" MaxLength="10" Margin="0,5" LostFocus="Population_LostFocus"/>
                                 <Button Content="UPRAVIT" Command="{Binding UpravitCommand}" Width="150" Height="25" Margin="0,20,0,5"/>
                                 <Button Content="ZOBRAZ" Command="{Binding ZobrazCommand}" Width="150" Height="25" Margin="0,5"/>
                             </StackPanel>
@@ -69,10 +70,10 @@
                             </StackPanel>
 
                             <StackPanel Grid.Column="1" Grid.Row="2" Orientation="Vertical" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="10,0">
-                                <TextBox Width="150" Height="25" Text="{Binding MinPopulaceHrace}" Margin="0,5" TextAlignment="Center" PreviewTextInput ="NumberValidationTextBox" PreviewKeyDown="TextBox_PreviewKeyDown"/>
-                                <TextBox Width="150" Height="25" Text="{Binding MaxPopulaceHrace}" Margin="0,5" TextAlignment="Center" PreviewTextInput ="NumberValidationTextBox" PreviewKeyDown="TextBox_PreviewKeyDown"/>
-                                <TextBox Width="150" Height="25" Text="{Binding MinPopulaceVesnice}" Margin="0,5" TextAlignment="Center" PreviewTextInput ="NumberValidationTextBox" PreviewKeyDown="TextBox_PreviewKeyDown"/>
-                                <TextBox Width="150" Height="25" Text="{Binding MaxPopulaceVesnice}" Margin="0,5" TextAlignment="Center" PreviewTextInput ="NumberValidationTextBox" PreviewKeyDown="TextBox_PreviewKeyDown"/>
+                                <TextBox Width="150" Height="25" Text="{Binding MinPopulaceHrace}" Margin="0,5" TextAlignment="Center" LostFocus="Population_LostFocus"/>
+                                <TextBox Width="150" Height="25" Text="{Binding MaxPopulaceHrace}" Margin="0,5" TextAlignment="Center" LostFocus="Population_LostFocus"/>
+                                <TextBox Width="150" Height="25" Text="{Binding MinPopulaceVesnice}" Margin="0,5" TextAlignment="Center" LostFocus="Population_LostFocus"/>
+                                <TextBox Width="150" Height="25" Text="{Binding MaxPopulaceVesnice}" Margin="0,5" TextAlignment="Center" LostFocus="Population_LostFocus"/>
                                 <CheckBox IsChecked="{Binding Riman}" Width="20" Height="25" Margin="0,5"/>
                                 <CheckBox IsChecked="{Binding Gal}" Width="20" Height="25" Margin="0,5"/>
                                 <CheckBox IsChecked="{Binding German}" Width="20" Height="25" Margin="0,5"/>
@@ -84,6 +85,14 @@
 
                             <StackPanel Grid.ColumnSpan="2" Orientation="Vertical" Grid.Row="3">
                                 <Button Content="VYHLEDAT" Command="{Binding VyhledatCommand}" Width="150" Height="25" Margin="0,5"/>
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="0" Grid.Row="4" Orientation="Vertical" Margin="10,0">
+                                <Button Content="NAČÍST" Command="{Binding NacistCommand}" Width="150" Height="25" Margin="0,20,0,5"/>
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="1" Grid.Row="4" Orientation="Vertical">
+                                <Button Content="ULOŽIT" Command="{Binding UlozitCommand}" Width="150" Height="25" Margin="0,20,0,5"/>
                             </StackPanel>
                         </Grid>
                     </StackPanel>
@@ -118,6 +127,11 @@
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
 
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+
                             <StackPanel Grid.Column="0" Orientation="Vertical" Margin="10,0">
                                 <TextBox Width="150" Height="25" Text="Jméno hráče" Margin="0,5" IsEnabled="False" TextAlignment="Center"/>
                                 <TextBox Width="150" Height="25" Text="Národ hráče" Margin="0,5" IsEnabled="False" TextAlignment="Center"/>
@@ -132,14 +146,15 @@
                                 <ComboBox Width="150" Height="25" Margin="0,5" ItemsSource="{Binding _alianceComboBox}" DisplayMemberPath="Zkratka" SelectedValuePath="ID" SelectedValue="{Binding VybranaAlianceID}"/>
                                 <Button Content="UPRAVIT" Command="{Binding UpravitHraceCommand}" Width="150" Height="25" Margin="0,20,0,5"/>
                                 <Button Content="ZOBRAZ" Command="{Binding ZobrazHraceCommand}" Width="150" Height="25" Margin="0,5"/>
-
                             </StackPanel>
+
+                            <StackPanel Grid.ColumnSpan="2" Orientation="Vertical" Grid.Row="1">
+                                <TextBox Text="VYHLEDÁVÁNÍ POMOCÍ JMÉNA HRÁČE" IsEnabled="False" Width="250" Height="25" TextAlignment="Center" HorizontalAlignment="Center" Margin="0,20,0,5"/>
+                                <TextBox Width="150" Height="25" Text="{Binding HledaneJmeno}" Margin="0,5" TextAlignment="Center"/>
+                                <Button Content="VYHLEDAT" Command="{Binding VyhledatHraceCommand}" Width="150" Height="25" Margin="0,5"/>
+                            </StackPanel>
+
                         </Grid>
-                        <StackPanel Grid.Column="0" Orientation="Vertical">
-
-                            
-
-                        </StackPanel>
                     </StackPanel>
                     <DataGrid Grid.Column="1" 
           ItemsSource="{Binding _hraciDataGrid}" 
@@ -171,6 +186,11 @@
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
 
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+
                             <StackPanel Grid.Column="0" Orientation="Vertical" Margin="10,0">
                                 <TextBox Width="150" Height="25" Text="Zkratka aliance" Margin="0,5" IsEnabled="False" TextAlignment="Center"/>
 
@@ -183,14 +203,14 @@
 
                                 <Button Content="UPRAVIT" Command="{Binding UpravitAlianciCommand}" Width="150" Height="25" Margin="0,20,0,5"/>
                                 <Button Content="ZOBRAZ" Command="{Binding ZobrazAlianciCommand}" Width="150" Height="25" Margin="0,5"/>
+                            </StackPanel>
 
+                            <StackPanel Grid.ColumnSpan="2" Orientation="Vertical" Grid.Row="1">
+                                <TextBox Text="VYHLEDÁVÁNÍ POMOCÍ ZKRATKY ALIANCE" IsEnabled="False" Width="250" Height="25" TextAlignment="Center" HorizontalAlignment="Center" Margin="0,20,0,5"/>
+                                <TextBox Width="150" Height="25" Text="{Binding HledanaAliance}" Margin="0,5" TextAlignment="Center"/>
+                                <Button Content="VYHLEDAT" Command="{Binding VyhledatAlianciCommand}" Width="150" Height="25" Margin="0,5"/>
                             </StackPanel>
                         </Grid>
-                        <StackPanel Grid.Column="0" Orientation="Vertical">
-
-                            
-
-                        </StackPanel>
                     </StackPanel>
                     <DataGrid Grid.Column="1" 
           ItemsSource="{Binding _alianceDataGrid}" 

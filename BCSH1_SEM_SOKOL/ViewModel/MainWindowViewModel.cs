@@ -1,6 +1,7 @@
 ﻿using BCSH1_SEM_SOKOL.Model;
 using BCSH1_SEM_SOKOL.View;
 using CommunityToolkit.Mvvm.Input;
+using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -52,12 +53,16 @@ namespace BCSH1_SEM_SOKOL.ViewModel
         public RelayCommand UpravitHraceCommand { get; }
         public RelayCommand OdebratHraceCommand { get; }
         public RelayCommand ZobrazHraceCommand { get; }
+        public RelayCommand VyhledatHraceCommand { get; }
 
         public RelayCommand PridatAlianciCommand { get; }
         public RelayCommand UpravitAlianciCommand { get; }
         public RelayCommand OdebratAlianciCommand { get; }
         public RelayCommand ZobrazAlianciCommand { get; }
+        public RelayCommand VyhledatAlianciCommand { get; }
 
+        public RelayCommand NacistCommand { get; }
+        public RelayCommand UlozitCommand { get; }
 
         private Vesnice _vybranaVesnice;
 
@@ -100,6 +105,30 @@ namespace BCSH1_SEM_SOKOL.ViewModel
                     VybranaAlianceID = _vybranyHrac.Aliance?.ID;
                     VybranyNarod = _vybranyHrac.Narod;
                 }
+            }
+        }
+
+        private string _hledaneJmeno;
+
+        public string HledaneJmeno
+        {
+            get { return _hledaneJmeno; }
+            set
+            {
+                _hledaneJmeno = value;
+                OnPropertyChanged(nameof(HledaneJmeno));
+            }
+        }
+
+        private string _hledanaAliance;
+
+        public string HledanaAliance
+        {
+            get { return _hledanaAliance; }
+            set
+            {
+                _hledanaAliance = value;
+                OnPropertyChanged(nameof(HledanaAliance));
             }
         }
 
@@ -186,8 +215,8 @@ namespace BCSH1_SEM_SOKOL.ViewModel
             }
         }
 
-        private int _vybranyHracID;
-        public int VybranyHracID
+        private int? _vybranyHracID;
+        public int? VybranyHracID
         {
             get { return _vybranyHracID; }
             set
@@ -347,8 +376,7 @@ namespace BCSH1_SEM_SOKOL.ViewModel
             _aliance.Add(new Aliance(null, ""));
             _vesnice = new List<Vesnice>();
             _narody = Enum.GetValues(typeof(Narod)).Cast<Narod>().ToList();
-
-            NactiZeSouboru();
+            VybranyNarod = Enum.GetValues(typeof(Narod)).Cast<Narod>().First();
 
             _alianceDataGrid = new ObservableCollection<Aliance>(_aliance.Where(a => a.ID != null));
 
@@ -370,85 +398,155 @@ namespace BCSH1_SEM_SOKOL.ViewModel
             UpravitHraceCommand = new RelayCommand(UpravitHrace);
             OdebratHraceCommand = new RelayCommand(OdebratHrace);
             ZobrazHraceCommand = new RelayCommand(ZobrazHrace);
+            VyhledatHraceCommand = new RelayCommand(VyhledejHrace);
 
             PridatAlianciCommand = new RelayCommand(PridatAlianci);
             UpravitAlianciCommand = new RelayCommand(UpravitAlianci);
             OdebratAlianciCommand = new RelayCommand(OdebratAlianci);
             ZobrazAlianciCommand = new RelayCommand(ZobrazAlianci);
+            VyhledatAlianciCommand = new RelayCommand(VyhledejAlianci);
+
+            NacistCommand = new RelayCommand(NactiZeSouboru);
+            UlozitCommand = new RelayCommand(UlozDoSouboru);
         }
 
         public void NactiZeSouboru()
         {
-            string cesta = "map.sql";
-            using (StreamReader reader = new StreamReader(cesta))
+            VyprazdniListy();
+
+            OpenFileDialog fileDialog = new();
+            fileDialog.Filter = "Soubory (*.sql)|*.sql";
+            fileDialog.Title = "Vyberte soubor";
+
+            if (fileDialog.ShowDialog() == true)
             {
-                string line;
-                while ((line = reader.ReadLine()) != null)
+                string cesta = fileDialog.FileName;
+
+                string ext = System.IO.Path.GetExtension(cesta);
+                if (ext != ".sql")
                 {
-                    string[] data = line.Split(',');
-                    string poleID = data[0];
-                    int x = int.Parse(data[1]);
-                    int y = int.Parse(data[2]);
-                    Narod narod = (Narod)int.Parse(data[3]);
-                    int vesniceID = int.Parse(data[4]);
-                    string vesniceJmeno = "";
+                    MessageBox.Show("Zadaný soubor nemá požadovanou koncovku.", "Chyba", MessageBoxButton.OK, MessageBoxImage.Error);
+                    return;
+                }
 
-                    int pocetSlovVNazvuVesnice = data.Length - 15;
-
-                    if (pocetSlovVNazvuVesnice > 1)
+                using (StreamReader reader = new(cesta))
+                {
+                    string line;
+                    while ((line = reader.ReadLine()) != null)
                     {
-                        for (int i = 5; i < 5 + pocetSlovVNazvuVesnice; i++)
+                        string[] data = line.Split(',');
+                        string poleID = data[0];
+                        int x = int.Parse(data[1]);
+                        int y = int.Parse(data[2]);
+                        Narod narod = (Narod)int.Parse(data[3]);
+                        int vesniceID = int.Parse(data[4]);
+                        string vesniceJmeno = "";
+
+                        int pocetSlovVNazvuVesnice = data.Length - 15;
+
+                        if (pocetSlovVNazvuVesnice > 1)
                         {
-                            vesniceJmeno += data[i].Trim('\'');
-                            if (i != 5 + pocetSlovVNazvuVesnice - 1)
-                                vesniceJmeno += ",";
+                            for (int i = 5; i < 5 + pocetSlovVNazvuVesnice; i++)
+                            {
+                                vesniceJmeno += data[i].Trim('\'');
+                                if (i != 5 + pocetSlovVNazvuVesnice - 1)
+                                    vesniceJmeno += ",";
+                            }
+                        }
+                        else
+                        {
+                            vesniceJmeno = data[5].Trim('\'');
+                        }
+
+                        int hracID = int.Parse(data[pocetSlovVNazvuVesnice + 5]);
+                        string hracJmeno = data[pocetSlovVNazvuVesnice + 6].Trim('\'');
+                        int? alianceID = string.IsNullOrEmpty(data[pocetSlovVNazvuVesnice + 7]) ? null : (int?)int.Parse(data[pocetSlovVNazvuVesnice + 7]);
+                        string alianceZkratka = data[pocetSlovVNazvuVesnice + 8].Trim('\'');
+                        int populace = int.Parse(data[pocetSlovVNazvuVesnice + 9]);
+
+                        Hrac hrac = _hraci.Find(p => p.ID == hracID);
+
+                        if (hrac == null)
+                        {
+                            hrac = new Hrac(hracID, hracJmeno, narod);
+                            _hraci.Add(hrac);
+                        }
+
+                        Vesnice vesnice = new(vesniceID, x, y, vesniceJmeno, hrac, populace);
+                        _vesnice.Add(vesnice);
+                        hrac.Vesnice.Add(vesnice);
+
+                        if (alianceID.HasValue && alianceID != 0)
+                        {
+                            Aliance aliance = _aliance.Find(a => a.ID == alianceID.Value);
+                            if (aliance == null)
+                            {
+                                aliance = new Aliance(alianceID.Value, alianceZkratka);
+                                _aliance.Add(aliance);
+                            }
+
+                            if (!aliance.Hraci.Contains(hrac))
+                            {
+                                aliance.Hraci.Add(hrac);
+                                hrac.Aliance = aliance;
+                            }
                         }
                     }
-                    else
-                    {
-                        vesniceJmeno = data[5].Trim('\'');
-                    }
-
-                    int hracID = int.Parse(data[pocetSlovVNazvuVesnice + 5]);
-                    string hracJmeno = data[pocetSlovVNazvuVesnice + 6].Trim('\'');
-                    int? alianceID = string.IsNullOrEmpty(data[pocetSlovVNazvuVesnice + 7]) ? null : (int?)int.Parse(data[pocetSlovVNazvuVesnice + 7]);
-                    string alianceZkratka = data[pocetSlovVNazvuVesnice + 8].Trim('\'');
-                    int populace = int.Parse(data[pocetSlovVNazvuVesnice + 9]);
-
-                    Hrac hrac = _hraci.Find(p => p.ID == hracID);
-                    
-                    if (hrac == null)
-                    {
-                        hrac = new Hrac(hracID, hracJmeno, narod);
-                        _hraci.Add(hrac);
-                    }
-
-                    Vesnice vesnice = new Vesnice(vesniceID, x, y, vesniceJmeno, hrac, populace);
-                    _vesnice.Add(vesnice);
-                    hrac.Vesnice.Add(vesnice);
-
-                    if (alianceID.HasValue && alianceID != 0)
-                    {
-                        Aliance aliance = _aliance.Find(a => a.ID == alianceID.Value);
-                        if (aliance == null)
-                        {
-                            aliance = new Aliance(alianceID.Value, alianceZkratka);
-                            _aliance.Add(aliance);
-                        }
-                       
-                        if (!aliance.Hraci.Contains(hrac))
-                        {
-                            aliance.Hraci.Add(hrac);
-                            hrac.Aliance = aliance;
-                        }
-                    }  
                 }
             }
+            AktualizujKolekce();
+        }
+
+        public void UlozDoSouboru()
+        {
+            SaveFileDialog saveFileDialog = new();
+            saveFileDialog.Filter = "SQL soubory (*.sql)|*.sql";
+            saveFileDialog.Title = "Uložte soubor";
+
+            if (saveFileDialog.ShowDialog() == true)
+            {
+                string cesta = saveFileDialog.FileName;
+
+                using (StreamWriter writer = new StreamWriter(cesta))
+                {
+                    foreach (Vesnice vesnice in _vesnice)
+                    {
+                        string insertStatement = $"INSERT INTO `x_world` VALUES ({vesnice.ID},{vesnice.X},{vesnice.Y},{(int)vesnice.Vlastnik.Narod},";
+                        
+                        insertStatement += $"{vesnice.ID},'{vesnice.Jmeno}',";
+
+                        insertStatement += $"{vesnice.Vlastnik.ID},'{vesnice.Vlastnik.Jmeno}',";
+                            
+                        if (vesnice.Vlastnik.Aliance != null)
+                            {
+                                insertStatement += $"{vesnice.Vlastnik.Aliance.ID},'{vesnice.Vlastnik.Aliance.Zkratka}',";
+                            }
+                            else
+                            {
+                                insertStatement += "0,'',";
+                            }
+                  
+                        insertStatement += $"{vesnice.Populace},NULL,FALSE,NULL,NULL,NULL);";
+
+                        writer.WriteLine(insertStatement);
+                    }
+                }
+
+                MessageBox.Show("Data byla úspěšně uložena do souboru.", "Info", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+        }
+
+        public void VyprazdniListy()
+        {
+            _aliance.Clear();
+            _aliance.Add(new Aliance(null, "")); 
+            _hraci.Clear();
+            _vesnice.Clear();
         }
 
         private int GenerujID()
         {
-            Random random = new Random();
+            Random random = new();
             int noveID;
 
             do
@@ -461,7 +559,7 @@ namespace BCSH1_SEM_SOKOL.ViewModel
 
         private int GenerujIdHrace()
         {
-            Random random = new Random();
+            Random random = new();
             int noveID;
 
             do
@@ -474,7 +572,7 @@ namespace BCSH1_SEM_SOKOL.ViewModel
 
         private int GenerujIdAliance()
         {
-            Random random = new Random();
+            Random random = new();
             int noveID;
 
             do
@@ -487,6 +585,12 @@ namespace BCSH1_SEM_SOKOL.ViewModel
 
         private void PridatVesnici()
         {
+            if (JmenoVesnice == null)
+            {
+                MessageBox.Show("Musíte zadat jméno vesnice!");
+                return;
+            }
+
             if (_vesnice.Any(v => v.Vlastnik.ID == VybranyHracID && v.Jmeno == JmenoVesnice))
             {
                 MessageBox.Show("Hráč již má vesnici se stejným jménem.");
@@ -505,6 +609,14 @@ namespace BCSH1_SEM_SOKOL.ViewModel
                 return;
             }
 
+            Hrac? hrac = _hraci.FirstOrDefault(h => h.ID == VybranyHracID);
+
+            if (hrac == null)
+            {
+                MessageBox.Show("Musíte vybrat existujícího hráče.");
+                return;
+            }
+
             if (Populace < 0)
             {
                 MessageBox.Show("Populace musí být větší nebo rovna nule.");
@@ -512,8 +624,6 @@ namespace BCSH1_SEM_SOKOL.ViewModel
             }
 
             int noveID = GenerujID();
-
-            Hrac hrac = _hraci.FirstOrDefault(h => h.ID == VybranyHracID);
 
             Vesnice novaVesnice = new Vesnice(noveID, X, Y, JmenoVesnice, hrac , Populace);
             _vesnice.Add(novaVesnice);
@@ -537,19 +647,11 @@ namespace BCSH1_SEM_SOKOL.ViewModel
                 return;
             }
 
-            if (VybranyNarod == null)
-            {
-                MessageBox.Show("Musíte vybrat národ hráče!");
-                return;
-            }
-
             int idHrace = GenerujIdHrace();
-
-            Narod narod = _narody.FirstOrDefault(n => n.ToString().Equals(VybranyNarod));
 
             Aliance? aliance = _aliance.FirstOrDefault(n => n.ID == VybranaAlianceID);
 
-            Hrac hrac = new Hrac(GenerujIdHrace(), JmenoHrace, narod);
+            Hrac hrac = new Hrac(GenerujIdHrace(), JmenoHrace, VybranyNarod);
 
             hrac.Aliance = aliance;
 
@@ -901,6 +1003,40 @@ namespace BCSH1_SEM_SOKOL.ViewModel
             {
                 _vesniceDataGrid.Add(vesnice);
             }
+        }
+
+        public void VyhledejHrace()
+        {
+            if (HledaneJmeno != null)
+            {
+                foreach (var hrac in _hraci)
+                {
+                    if (hrac.Jmeno == HledaneJmeno)
+                    {
+                        VybranyHrac = hrac;
+                        return;
+                    }
+                }
+            }
+
+            MessageBox.Show($"Hráč s jménem {HledaneJmeno} nebyl nalezen.");
+        }
+
+        public void VyhledejAlianci()
+        {
+            if (HledanaAliance != null)
+            {
+                foreach (var aliance in _aliance)
+                {
+                    if (aliance.Zkratka == HledanaAliance)
+                    {
+                        VybranaAliance = aliance;
+                        return;
+                    }
+                }
+            }
+
+            MessageBox.Show($"Aliance se zkratkou {HledanaAliance} nebyla nalezena.");
         }
 
         public event PropertyChangedEventHandler PropertyChanged;
